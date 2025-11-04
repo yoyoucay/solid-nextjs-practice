@@ -13,7 +13,6 @@ const principles = [
 
 export default function Navigation() {
   const pathname = usePathname();
-
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-6">

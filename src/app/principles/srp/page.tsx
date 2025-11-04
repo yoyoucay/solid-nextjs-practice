@@ -2,17 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { UserRepository } from '@/lib/repositories/user.repository';
-import { User } from '@/lib/types';
+import { Product, User } from '@/lib/types';
+import { UserList } from '@/app/components/users/user-list';
+import { ProductList } from '@/app/components/products/product-list';
 
 export default function SRPDemo() {
   const [users, setUsers] = useState<User[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState({ 
     name: '', 
     email: '', 
     role: 'user' as User['role'],
-    createdAt: new Date().toISOString()
-  });
+    createdAt: new Date().toISOString()});
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   
   const userRepo = new UserRepository();
 
@@ -21,8 +24,13 @@ export default function SRPDemo() {
   }, []);
 
   const loadUsers = async () => {
-    const allUsers = await userRepo.findAll();
-    setUsers(allUsers);
+    setLoading(true);
+    try {
+      const allUsers = await userRepo.findAll();
+      setUsers(allUsers);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,16 +66,16 @@ export default function SRPDemo() {
   };
 
   return (
-    <div className="container mx-auto px-6 py-8"> {/* Added more padding */}
-      <div className="max-w-6xl mx-auto"> {/* Container for better centering */}
+    <div className="container mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto">
         
-        {/* Header Section */}
-        <div className="mb-8"> {/* Added margin bottom */}
+        {/* Header */}
+        <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             SRP - Single Responsibility Principle
           </h1>
           <p className="text-gray-600 text-lg">
-            Each class should have only one reason to change
+            Each class/component should have only one reason to change
           </p>
         </div>
         
@@ -115,7 +123,12 @@ export default function SRPDemo() {
                   type="button" 
                   onClick={() => {
                     setEditingId(null);
-                    setFormData({ name: '', email: '', role: 'user', createdAt: new Date().toISOString() });
+                    setFormData({ 
+                      name: '', 
+                      email: '', 
+                      role: 'user', 
+                      createdAt: new Date().toISOString() 
+                    });
                   }}
                   className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors"
                 >
@@ -126,63 +139,23 @@ export default function SRPDemo() {
           </form>
         </div>
 
-        {/* Users List */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-xl font-semibold">Users ({users.length})</h2>
-          </div>
-          <div className="divide-y divide-gray-200">
-            {users.map(user => (
-              <div key={user.id} className="px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
-                <div>
-                  <h3 className="font-semibold text-lg text-gray-900">{user.name}</h3>
-                  <p className="text-gray-600">{user.email}</p>
-                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                    user.role === 'admin' 
-                      ? 'bg-purple-100 text-purple-800' 
-                      : 'bg-green-100 text-green-800'
-                  }`}>
-                    {user.role}
-                  </span>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Created: {new Date(user.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => handleEdit(user)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(user.id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-            {users.length === 0 && (
-              <div className="px-6 py-12 text-center text-gray-500 bg-gray-50">
-                <div className="text-lg font-medium mb-2">No users found</div>
-                <p className="text-gray-400">Create your first user using the form above</p>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Reusable User List Component */}
+        <UserList
+          users={users}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          loading={loading}
+        />
 
         {/* SRP Explanation */}
         <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="text-lg font-semibold text-blue-900 mb-2">About SRP</h3>
-          <p className="text-blue-800">
-            In this example, we have separate classes for different responsibilities:
-          </p>
-          <ul className="list-disc list-inside text-blue-800 mt-2 space-y-1">
-            <li><strong>UserRepository</strong> - Handles data access operations</li>
-            <li><strong>LocalStorageAdapter</strong> - Handles storage implementation</li>
-            <li><strong>UI Component</strong> - Handles presentation and user interactions</li>
+          <h3 className="text-lg font-semibold text-blue-900 mb-2">SOLID Principles Applied</h3>
+          <ul className="list-disc list-inside text-blue-800 space-y-1">
+            <li><strong>SRP:</strong> Each component has single responsibility</li>
+            <li><strong>OCP:</strong> DataList is open for extension (custom actions, renderers)</li>
+            <li><strong>LSP:</strong> All list items implement IListItem interface</li>
+            <li><strong>ISP:</strong> Small, focused interfaces</li>
+            <li><strong>DIP:</strong> Components depend on abstractions, not concretions</li>
           </ul>
         </div>
 
